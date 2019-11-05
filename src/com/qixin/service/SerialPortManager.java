@@ -89,6 +89,7 @@ public class SerialPortManager {
 			out.write(order);
 			out.flush();
 		} catch (IOException e) {
+			e.printStackTrace();
 		} finally {
 			try {
 				if (out != null) {
@@ -96,6 +97,7 @@ public class SerialPortManager {
 					out = null;
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}

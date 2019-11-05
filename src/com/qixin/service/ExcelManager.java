@@ -31,77 +31,14 @@ public class ExcelManager {
 		for (int i = 1; i <= sheet0.getLastRowNum(); i++) {
 			Vector<Object> rowData = new Vector<Object>();
 			Row row = sheet0.getRow(i);
-			byte[] bytes = new byte[47];
-			// flag
-			bytes[0] = (byte) 0xEA;
-			// type
-			bytes[2] = (byte) (Integer.parseInt(row.getCell(0).getStringCellValue()));
 			rowData.add(row.getCell(0).getStringCellValue());
-			// count
-			bytes[3] = (byte) (Integer.parseInt(row.getCell(1).getStringCellValue()));
 			rowData.add(row.getCell(1).getStringCellValue());
-			// error_count
-			bytes[4] = (byte) (Integer.parseInt(row.getCell(2).getStringCellValue()));
 			rowData.add(row.getCell(2).getStringCellValue());
-
-			// 时间
-			String tmp = row.getCell(3).getStringCellValue();
-			tmp = tmp.replaceAll("(.{2})", "$1 ").trim();
-			String[] tmps = tmp.split(" ");
-			for (int j = 0; j < tmps.length; j++) {
-				bytes[j + 5] = (byte) (Integer.parseInt(tmps[j]));
-			}
 			rowData.add(row.getCell(3).getStringCellValue());
-
-			// 小区
-			tmp = row.getCell(4).getStringCellValue();
-			tmp = String.format("%40s", tmp);
-			tmp = tmp.replaceAll(" ", "0");
-			tmp = tmp.replaceAll("(.{2})", "$1 ").trim();
-			tmps = tmp.split(" ");
-			for (int j = 0; j < tmps.length; j++) {
-				bytes[j + 11] = (byte) (Integer.parseInt(tmps[j]));
-			}
 			rowData.add(row.getCell(4).getStringCellValue());
-
-			// 楼号
-			tmp = row.getCell(5).getStringCellValue();
-			tmp = String.format("%12s", tmp);
-			tmp = tmp.replaceAll(" ", "0");
-			tmp = tmp.replaceAll("(.{2})", "$1 ").trim();
-			tmps = tmp.split(" ");
-			for (int j = 0; j < tmps.length; j++) {
-				bytes[j + 31] = (byte) (Integer.parseInt(tmps[j]));
-			}
 			rowData.add(row.getCell(5).getStringCellValue());
-
-			// 单元
-			tmp = row.getCell(6).getStringCellValue();
-			tmp = String.format("%12s", tmp);
-			tmp = tmp.replaceAll(" ", "0");
-			tmp = tmp.replaceAll("(.{2})", "$1 ").trim();
-			tmps = tmp.split(" ");
-			for (int j = 0; j < tmps.length; j++) {
-				bytes[j + 37] = (byte) (Integer.parseInt(tmps[j]));
-			}
 			rowData.add(row.getCell(6).getStringCellValue());
-
-			// 总线号
-			tmp = row.getCell(7).getStringCellValue();
-			tmp = String.format("%8s", tmp);
-			tmp = tmp.replaceAll(" ", "0");
-			tmp = tmp.replaceAll("(.{2})", "$1 ").trim();
-			tmps = tmp.split(" ");
-			for (int j = 0; j < tmps.length; j++) {
-				bytes[j + 43] = (byte) (Integer.parseInt(tmps[j]));
-			}
 			rowData.add(row.getCell(7).getStringCellValue());
-
-			// crc
-			for (int j = 2; j < 47; j++) {
-				bytes[1] += bytes[j];
-			}
-			rowData.add(bytes);
 			readData.add(rowData);
 		}
 		excel.close();
@@ -175,7 +112,7 @@ public class ExcelManager {
 		int start = 0;
 		int start1 = 0;
 		int start2 = 0;
-		int start3 = 256;
+		int start3 = 260;
 		for (Map.Entry<String, Integer> xiaoqu : xiaoqus.entrySet()) {
 
 			Map<String, Integer> lous = new HashMap<String, Integer>();
@@ -310,7 +247,7 @@ public class ExcelManager {
 		head[0] = (byte) (0xFE);
 		head[1] = (byte) (0x68);
 		head[2] = (byte) (0x00);
-		head[3] = (byte) (0x2D);
+		head[3] = (byte) (0x2F);
 		head[4] = (byte) (0x50);
 		head[5] = (byte) (sect / 256);
 		head[6] = (byte) (sect % 256);
@@ -329,25 +266,25 @@ public class ExcelManager {
 		byte[] temp = tmp.getBytes();
 		int cha = 20 - temp.length;
 		for (int i = 0; i < temp.length; i++) {
-			head[i + cha + 14] = temp[i];
+			head[i + cha + 16] = temp[i];
 		}
 
 		tmp = obj.getLouhao();
 		temp = tmp.getBytes();
 		cha = 6 - temp.length;
 		for (int i = 0; i < temp.length; i++) {
-			head[i + cha + 34] = temp[i];
+			head[i + cha + 36] = temp[i];
 		}
 
 		tmp = obj.getDanyuan();
 		temp = tmp.getBytes();
 		cha = 6 - temp.length;
 		for (int i = 0; i < temp.length; i++) {
-			head[i + cha + 40] = temp[i];
+			head[i + cha + 42] = temp[i];
 		}
 
 		for (int i = 0; i < 4; i++) {
-			head[i + 46] = zongxian[i];
+			head[i + 48] = zongxian[i];
 		}
 		for (int i = 1; i < head.length - 2; i++) {
 			head[52] += head[i];
@@ -357,8 +294,9 @@ public class ExcelManager {
 	}
 
 	private static byte[] listToArray(List<Byte> list, int sect) {
-		int size = list.size();
-		byte[] bytes = new byte[size + 9];
+		int size = list.size() + 2;
+		int len = size + 7;
+		byte[] bytes = new byte[len];
 		bytes[0] = (byte) 0xFE;
 		bytes[1] = (byte) 0x68;
 		bytes[2] = (byte) (size / 256);
@@ -366,11 +304,11 @@ public class ExcelManager {
 		bytes[4] = (byte) 0x50;
 		bytes[5] = (byte) (sect / 256);
 		bytes[6] = (byte) (sect % 256);
-		bytes[size - 1] = (byte) 0x16;
-		bytes[size - 2] = (byte) (bytes[1] + bytes[2] + bytes[3] + bytes[4]);
-		for (int i = 0; i < size; i++) {
+		bytes[len - 1] = (byte) 0x16;
+		bytes[len - 2] = (byte) (bytes[1] + bytes[2] + bytes[3] + bytes[4] + bytes[5] + bytes[6]);
+		for (int i = 0; i < size - 2; i++) {
 			bytes[i + 7] = list.get(i);
-			bytes[size - 2] = list.get(i);
+			bytes[len - 2] += list.get(i);
 		}
 		return bytes;
 	}

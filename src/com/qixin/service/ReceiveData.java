@@ -2,6 +2,7 @@ package com.qixin.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 
 import com.qixin.ui.MainWindows;
 
@@ -31,17 +32,35 @@ public class ReceiveData implements SerialPortEventListener {
 			try {
 				in = serialPort.getInputStream();
 				// 获取buffer里的数据长度
-				int bufflenth = in.available();
-				while (bufflenth != 0) {
+//				int bufflenth = in.available();
+//				while (bufflenth != 0) {
+//					// 初始化byte数组为buffer中数据的长度
+//					bytes = new byte[bufflenth];
+//					in.read(bytes);
+//					bufflenth = in.available();
+//				}
+
+				while (in.available() > 0) {
+
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+
 					// 初始化byte数组为buffer中数据的长度
-					bytes = new byte[bufflenth];
+					bytes = new byte[in.available()];
 					in.read(bytes);
-					bufflenth = in.available();
 				}
-				if (bytes.length == 7) {
-					mainWindows.onReceive(bytes);
+
+				System.out.print("收到");
+				for (int i = 0; i < bytes.length; i++) {
+					System.out.print(String.format("%02X", bytes[i])+" ");
 				}
+				System.out.println();
+				mainWindows.onReceive(bytes);
 			} catch (IOException e) {
+				e.printStackTrace();
 			} finally {
 				try {
 					if (in != null) {
@@ -49,6 +68,7 @@ public class ReceiveData implements SerialPortEventListener {
 						in = null;
 					}
 				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 		}

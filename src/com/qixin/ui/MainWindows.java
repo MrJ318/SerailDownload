@@ -4,7 +4,10 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.TooManyListenersException;
 import java.util.Vector;
 
 import javax.swing.DefaultComboBoxModel;
@@ -17,7 +20,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.table.TableColumn;
+
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 import com.qixin.listener.RecevieDataListener;
 import com.qixin.service.ExcelManager;
@@ -41,7 +45,6 @@ public class MainWindows implements RecevieDataListener {
 	private File file;
 	private SerialPort serialPort;
 	private SendThread sendThread;
-	private int succ, err;
 	private boolean flag = false;
 
 	public static void main(String[] args) {
@@ -117,15 +120,11 @@ public class MainWindows implements RecevieDataListener {
 		columnNames.add("楼号");
 		columnNames.add("单元");
 		columnNames.add("总线号");
-		columnNames.add("code");
 
 		AddCheckboxTableModel tableModel = new AddCheckboxTableModel(tableData, columnNames);
-// ------------------------------------------
-
 		table = new JTable();
 		table.setRowHeight(30);
 		table.setModel(tableModel);
-		hideLstColumn();
 
 		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.setBounds(14, 92, 1299, 547);
@@ -142,7 +141,6 @@ public class MainWindows implements RecevieDataListener {
 					try {
 						tableData = ExcelManager.readExcel(file);
 						tableModel.setDataVector(tableData, columnNames);
-						hideLstColumn();
 					} catch (Exception e1) {
 						JOptionPane.showMessageDialog(frame, "读取文件失败，请检查");
 					}
@@ -151,15 +149,6 @@ public class MainWindows implements RecevieDataListener {
 		});
 		button_3.setBounds(988, 25, 135, 45);
 		frame.getContentPane().add(button_3);
-
-//		JButton button_4 = new JButton("写入选中项");
-//		button_4.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				writeData(true);
-//			}
-//		});
-//		button_4.setBounds(638, 17, 113, 27);
-//		frame.getContentPane().add(button_4);
 
 		JButton button_5 = new JButton("写入");
 		button_5.addActionListener(new ActionListener() {
@@ -171,30 +160,17 @@ public class MainWindows implements RecevieDataListener {
 		frame.getContentPane().add(button_5);
 
 		JLabel label_2 = new JLabel("进度:");
-		label_2.setBounds(27, 671, 72, 18);
+		label_2.setBounds(253, 671, 72, 18);
 		frame.getContentPane().add(label_2);
 
 		label_Info = new JLabel();
-		label_Info.setBounds(233, 422, 535, 18);
+		label_Info.setBounds(14, 671, 200, 18);
 		frame.getContentPane().add(label_Info);
 
 		progressBar = new JProgressBar();
-		progressBar.setBounds(80, 668, 404, 21);
+		progressBar.setBounds(306, 668, 404, 21);
 		frame.getContentPane().add(progressBar);
 
-	}
-
-	/**
-	 * 隐藏最后一列
-	 */
-	private void hideLstColumn() {
-		TableColumn tc = table.getColumnModel().getColumn(8);
-		tc.setMaxWidth(0);
-		tc.setPreferredWidth(0);
-		tc.setMinWidth(0);
-		tc.setWidth(0);
-		table.getTableHeader().getColumnModel().getColumn(8).setMaxWidth(0);
-		table.getTableHeader().getColumnModel().getColumn(8).setMinWidth(0);
 	}
 
 	/**
@@ -205,6 +181,30 @@ public class MainWindows implements RecevieDataListener {
 		box.setModel(new DefaultComboBoxModel<String>(comList));
 	}
 
+	/**
+	 * 加载波特率列表
+	 * 
+	 * @param box
+	 */
+	private void loadRate(JComboBox<Integer> box) {
+		Vector<Integer> rateList = new Vector<Integer>();
+		rateList.add(9600);
+		rateList.add(14400);
+		rateList.add(19200);
+		rateList.add(28800);
+		rateList.add(38400);
+		rateList.add(57600);
+		rateList.add(115200);
+		box.setModel(new DefaultComboBoxModel<Integer>(rateList));
+	}
+
+	/**
+	 * 打开或关闭串口
+	 * 
+	 * @param com  串口号
+	 * @param rate 波特率
+	 * @return
+	 */
 	private String operPort(String com, int rate) {
 		if (flag) {
 			SerialPortManager.closePort(serialPort);
@@ -227,58 +227,6 @@ public class MainWindows implements RecevieDataListener {
 
 	}
 
-	private void loadRate(JComboBox<Integer> box) {
-		Vector<Integer> rateList = new Vector<Integer>();
-		rateList.add(9600);
-		rateList.add(14400);
-		rateList.add(19200);
-		rateList.add(28800);
-		rateList.add(38400);
-		rateList.add(57600);
-		rateList.add(115200);
-		box.setModel(new DefaultComboBoxModel<Integer>(rateList));
-	}
-
-	@Override
-	public void onReceive(byte[] bytes) {
-
-//		StringBuffer buffer = new StringBuffer();
-//		for (byte b : bytes) {
-//			buffer.append(String.format("%02X", b) + " ");
-//
-//		}
-//		System.out.println(buffer.toString());
-
-		if (bytes.length >= 6) {
-
-			if (bytes[0] == 0x68 && bytes[1] == 0 && bytes[2] == 1 && bytes[6] == 0x16) {
-				progressBar.setValue(progressBar.getValue() + 1);
-				sendThread.flag = true;
-			}
-
-//			if (bytes[3] == (byte) 0xA0) {
-//				succ++;
-//			} else {
-//				if (bytes[4] == 0x00) {
-//					err++;
-//				} else {
-//					sendThread.flag = false;
-//					JOptionPane.showMessageDialog(frame, "设备内存已满!");
-//					SerialPortManager.removeListener(serialPort);
-//				}
-//			}
-//			if (sendThread != null) {
-//				progressBar.setValue(progressBar.getValue() + 1);
-//				synchronized (sendThread) {
-//					sendThread.notify();
-//				}
-//			}
-		}
-
-//		label_Info.setText("成功:" + succ + "条，" + "失败:" + err + "条");
-
-	}
-
 	private void writeData() {
 //		if (tableData == null || tableData.size() < 1) {
 //			JOptionPane.showMessageDialog(frame, "请先选择文件");
@@ -290,56 +238,77 @@ public class MainWindows implements RecevieDataListener {
 //			return;
 //		}
 //
-//		List<byte[]> sendList = new ArrayList<byte[]>();
-//
-//		for (Vector<Object> row : tableData) {
-//			sendList.add((byte[]) row.get(9));
+//		try {
+//			List<byte[]> sendList = ExcelManager.getDataBytes(file);
+//			progressBar.setMaximum(sendList.size());
+//			label_Info.setText("正在写入，请稍后...");
+//			SerialPortManager.addListener(serialPort, new ReceiveData(MainWindows.this, serialPort));
+//			sendThread = new SendThread(MainWindows.this, serialPort, sendList);
+//			sendThread.start();
+//		} catch (Exception e) {
+//			JOptionPane.showMessageDialog(frame, "读取文件失败，请检查");
 //		}
-
+		SerialPort port;
 		try {
-			List<byte[]> sendList = ExcelManager.getDataBytes(file);
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(frame, "读取文件失败，请检查");
+			port = SerialPortManager.openPort("COM3", 57600);
+			List<byte[]> sendList = ExcelManager.getDataBytes(new File("F:\\tt.xlsx"));
+			SerialPortManager.addListener(port, new ReceiveData(MainWindows.this, port));
+			sendThread = new SendThread(MainWindows.this, port, sendList);
+			sendThread.start();
+		} catch (NoSuchPortException | PortInUseException | UnsupportedCommOperationException e) {
+			e.printStackTrace();
+		} catch (InvalidFormatException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-
-//		progressBar.setMaximum(sendList.size());
-//		sendThread = new SendThread(serialPort, sendList);
-//		sendThread.start();
-		byte[] bytes = new byte[4096];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = (byte) (i % 128);
-		}
-		SerialPortManager.sendToPort(serialPort, bytes);
-		SerialPortManager.addListener(serialPort, new ReceiveData(MainWindows.this, serialPort));
 
 	}
 
 	@Override
+	public void onReceive(byte[] bytes) {
+
+		if (bytes[0] == 0) {
+			bytes = Arrays.copyOfRange(bytes, 1, bytes.length);
+		}
+
+		if (bytes.length == 6 && bytes[0] == (byte) 0x68 && bytes[1] == 0 && bytes[2] == 0 && bytes[3] == (byte) 0xAC
+				&& bytes[4] == (byte) 0x14 && bytes[5] == (byte) 0x16) {
+			sendThread.flag = true;
+			progressBar.setValue(progressBar.getValue() + 1);
+		}
+	}
+
+	@Override
 	public void onSendErr(int code) {
+		String str;
 		switch (code) {
 		case 0:
-			label_Info.setText("写入小区信息失败！");
+			str = "写入小区信息失败,请重新进行操作！";
 			break;
 
 		case 1:
-			label_Info.setText("写入楼信息失败！");
+			str = "写入楼信息失败,请重新进行操作！";
 			break;
 
 		case 2:
-			label_Info.setText("写入单元信息失败！");
+			str = "写入单元信息失败,请重新进行操作！";
 			break;
 
 		case 3:
-			label_Info.setText("写入总线信息失败！");
+			str = "写入总线信息失败,请重新进行操作！";
 			break;
 
 		case 256:
-			label_Info.setText("操作完成，全部文件写入成功");
+			str = "操作完成，全部文件写入成功";
 			break;
 
 		default:
-			label_Info.setText("写入第" + (code - 3) + "条文件头信息失败！");
+			str = "写入第" + (code - 3) + "条文件头信息失败,请重新进行操作！";
 			break;
 		}
+		label_Info.setText(str);
+		JOptionPane.showMessageDialog(frame, str);
+		progressBar.setValue(0);
 	}
 }
