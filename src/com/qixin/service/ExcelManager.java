@@ -127,12 +127,11 @@ public class ExcelManager {
 				}
 			}
 
-			String name = xiaoqu.getKey() + "0";
+			String name = xiaoqu.getKey() ;
 			byte[] temp = name.getBytes();
 			byte[] recoder = new byte[24];
-			int cha = recoder.length - temp.length - 4;
 			for (int i = 0; i < temp.length; i++) {
-				recoder[i + cha] = temp[i];
+				recoder[i] = temp[i];
 			}
 			recoder[20] = (byte) (start / 256);
 			recoder[21] = (byte) (start % 256);
@@ -159,9 +158,8 @@ public class ExcelManager {
 				name = lou.getKey();
 				temp = name.getBytes();
 				recoder = new byte[10];
-				cha = recoder.length - temp.length - 4;
 				for (int i = 0; i < temp.length; i++) {
-					recoder[i + cha] = temp[i];
+					recoder[i] = temp[i];
 				}
 				recoder[6] = (byte) (start1 / 256);
 				recoder[7] = (byte) (start1 % 256);
@@ -189,9 +187,8 @@ public class ExcelManager {
 					name = danyuan.getKey();
 					temp = name.getBytes();
 					recoder = new byte[10];
-					cha = recoder.length - temp.length - 4;
 					for (int i = 0; i < temp.length; i++) {
-						recoder[i + cha] = temp[i];
+						recoder[i ] = temp[i];
 					}
 					recoder[6] = (byte) (start2 / 256);
 					recoder[7] = (byte) (start2 % 256);
@@ -262,25 +259,22 @@ public class ExcelManager {
 			head[j + 10] = (byte) (Integer.parseInt(tmps[j]));
 		}
 
-		tmp = obj.getXiaoqu() + "0";
+		tmp = obj.getXiaoqu();
 		byte[] temp = tmp.getBytes();
-		int cha = 20 - temp.length;
 		for (int i = 0; i < temp.length; i++) {
-			head[i + cha + 16] = temp[i];
+			head[i +  16] = temp[i];
 		}
 
 		tmp = obj.getLouhao();
 		temp = tmp.getBytes();
-		cha = 6 - temp.length;
 		for (int i = 0; i < temp.length; i++) {
-			head[i + cha + 36] = temp[i];
+			head[i  + 36] = temp[i];
 		}
 
 		tmp = obj.getDanyuan();
 		temp = tmp.getBytes();
-		cha = 6 - temp.length;
 		for (int i = 0; i < temp.length; i++) {
-			head[i + cha + 42] = temp[i];
+			head[i  + 42] = temp[i];
 		}
 
 		for (int i = 0; i < 4; i++) {
