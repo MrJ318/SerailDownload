@@ -1,17 +1,17 @@
 package com.qixin.model;
 
-public class FileHead1 {
+public class TableHead {
 
 	private String type;
 	private String count;
-	private String errCount;
-	private String date;
+	private String errcnt;
+	private String datetime;
 	private String xiaoqu;
 	private String louhao;
 	private String danyuan;
-	private String zongxian;
+	private String linenum;
 
-	public FileHead1() {
+	public TableHead() {
 		super();
 	}
 
@@ -31,20 +31,20 @@ public class FileHead1 {
 		this.count = count;
 	}
 
-	public String getErrCount() {
-		return errCount;
+	public String getErrcnt() {
+		return errcnt;
 	}
 
-	public void setErrCount(String errCount) {
-		this.errCount = errCount;
+	public void setErrcnt(String errcnt) {
+		this.errcnt = errcnt;
 	}
 
-	public String getDate() {
-		return date;
+	public String getDatetime() {
+		return datetime;
 	}
 
-	public void setDate(String date) {
-		this.date = date;
+	public void setDatetime(String datetime) {
+		this.datetime = datetime;
 	}
 
 	public String getXiaoqu() {
@@ -71,20 +71,18 @@ public class FileHead1 {
 		this.danyuan = danyuan;
 	}
 
-	public String getZongxian() {
-		return zongxian;
+	public String getLinenum() {
+		return linenum;
 	}
 
-	public void setZongxian(String zongxian) {
-		this.zongxian = zongxian;
+	public void setLinenum(String linenum) {
+		this.linenum = linenum;
 	}
 
 	@Override
 	public String toString() {
-		return "FileHead1 [xiaoqu=" + xiaoqu + ", louhao=" + louhao + ", danyuan=" + danyuan + ", zongxian=" + zongxian
-				+ "]";
+		return "TableHead [type=" + type + ", count=" + count + ", errcnt=" + errcnt + ", datetime=" + datetime
+				+ ", xiaoqu=" + xiaoqu + ", louhao=" + louhao + ", danyuan=" + danyuan + ", linenum=" + linenum + "]";
 	}
-	
-	
 
 }

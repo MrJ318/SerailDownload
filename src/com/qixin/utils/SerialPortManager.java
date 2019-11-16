@@ -1,4 +1,4 @@
-package com.qixin.service;
+package com.qixin.utils;
 
 import java.io.IOException;
 import java.io.InputStream;

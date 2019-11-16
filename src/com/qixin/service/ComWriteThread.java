@@ -2,38 +2,35 @@ package com.qixin.service;
 
 import java.util.List;
 
-import com.qixin.ui.MainWindows;
+import com.qixin.listener.MainListener;
+import com.qixin.utils.SerialPortManager;
 
 import gnu.io.SerialPort;
 
-public class SendThread extends Thread {
+public class ComWriteThread extends Thread {
 
-	private MainWindows mainWindows;
+	private MainListener listener;
 	private List<byte[]> sendList;
 	private SerialPort serialPort;
 	public boolean flag = true;
 
-	public SendThread(MainWindows mainWindows, SerialPort serialPort, List<byte[]> list) {
-		this.mainWindows = mainWindows;
+	public ComWriteThread(MainListener listener, SerialPort serialPort, List<byte[]> list) {
+		this.listener = listener;
 		this.serialPort = serialPort;
 		this.sendList = list;
 	}
 
 	@Override
 	public void run() {
-//		byte[] bytes = { (byte) 0x68, (byte) 0x00, (byte) 0x02, (byte) 0x51, (byte) 0x10, (byte) 0x00, (byte) 0xCB,
-//				(byte) 0x16 };
-//		for (int i = 0; i < 30; i++) {
-//			System.out.println("·¢ËÍ£º" + i);
-//			SerialPortManager.sendToPort(serialPort, bytes);
-//			try {
-//				sleep(160);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
+//		byte[] bytes = new byte[] {(byte)0xFE,(byte)0x68,(byte)0x00,(byte)0x02,(byte)0x52,(byte)0x10,(byte)0x60,(byte)0x2C,(byte)0x16};
+//		SerialPortManager.sendToPort(serialPort, bytes);
+//		try {
+//			sleep(160);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
 //		}
-//
+
 		int count = 0;
 		for (int i = 0; i < sendList.size(); i++) {
 			flag = false;
@@ -44,7 +41,7 @@ public class SendThread extends Thread {
 			}
 			System.out.println();
 			try {
-				sleep(160);
+				sleep(200);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -55,12 +52,13 @@ public class SendThread extends Thread {
 			} else {
 				count = 0;
 			}
-			if (count > 2) {
-				mainWindows.onSendErr(++i);
+			if (count > 3) {
+				listener.onSendCompelet(-1);
 				return;
 			}
 		}
-		mainWindows.onSendErr(256);
+
+		listener.onSendCompelet(0);
 
 	}
 }
