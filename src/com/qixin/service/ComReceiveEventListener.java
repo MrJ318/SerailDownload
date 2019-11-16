@@ -17,10 +17,12 @@ public class ComReceiveEventListener implements SerialPortEventListener {
 
 	private MainWindows mainWindows;
 	private SerialPort serialPort;
+	private int flag;
 
-	public ComReceiveEventListener(MainWindows mainWindows, SerialPort serialPort) {
+	public ComReceiveEventListener(MainWindows mainWindows, SerialPort serialPort, int flag) {
 		this.mainWindows = mainWindows;
 		this.serialPort = serialPort;
+		this.flag = flag;
 	}
 
 	@Override
@@ -52,12 +54,18 @@ public class ComReceiveEventListener implements SerialPortEventListener {
 					in.read(bytes);
 				}
 
-				System.out.print("收到"+bytes.length+"--:");
-				for (int i = 0; i < bytes.length; i++) {
-					System.out.print(String.format("%02X", bytes[i])+" ");
+//				System.out.print("收到" + bytes.length + "--:");
+//				for (int i = 0; i < bytes.length; i++) {
+//					System.out.print(String.format("%02X", bytes[i]) + " ");
+//				}
+//				System.out.println();
+				if (flag == 0) {
+					mainWindows.onReceiveCompelet1(bytes);
+					flag = 1;
+				} else {
+					System.out.println("收到数据");
+					mainWindows.onReceiveCompelet2(bytes);
 				}
-				System.out.println();
-				mainWindows.onReceiveCompelet(bytes);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} finally {

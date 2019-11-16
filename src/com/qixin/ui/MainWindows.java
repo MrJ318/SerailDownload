@@ -4,6 +4,8 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +34,10 @@ import com.qixin.utils.ByteUtil;
 import com.qixin.utils.ExcelManager;
 import com.qixin.utils.SerialPortManager;
 
+import gnu.io.NoSuchPortException;
+import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
+import gnu.io.UnsupportedCommOperationException;
 
 public class MainWindows implements MainListener {
 
@@ -44,7 +49,8 @@ public class MainWindows implements MainListener {
 	private Vector<String> comList;
 	private File file;
 	private SerialPort serialPort;
-	private ComWriteThread sendThread;
+	private ComWriteThread writeThread;
+	private ComReceiveThread receiveThread;
 	private boolean flag = false;
 
 	public static void main(String[] args) {
@@ -225,8 +231,12 @@ public class MainWindows implements MainListener {
 				flag = true;
 				label_Info.setText("串口已打开");
 				return "关闭串口";
-			} catch (Exception e) {
-				JOptionPane.showMessageDialog(frame, "打开失败，" + e.getMessage() + "！");
+			} catch (NoSuchPortException e) {
+				JOptionPane.showMessageDialog(frame, "串口打开失败，串口号有误！");
+			} catch (PortInUseException e) {
+				JOptionPane.showMessageDialog(frame, "串口打开失败，当前串口被占用！");
+			} catch (UnsupportedCommOperationException e) {
+				JOptionPane.showMessageDialog(frame, "串口打开失败，" + e.getMessage());
 			}
 			return "";
 		}
@@ -252,8 +262,8 @@ public class MainWindows implements MainListener {
 			progressBar.setMaximum(sendList.size());
 			label_Info.setText("正在写入，请稍后...");
 			SerialPortManager.addListener(serialPort, new ComWriteEventListener(MainWindows.this, serialPort));
-			sendThread = new ComWriteThread(MainWindows.this, serialPort, sendList);
-			sendThread.start();
+			writeThread = new ComWriteThread(MainWindows.this, serialPort, sendList);
+			writeThread.start();
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(frame, "读取文件失败，请检查\n" + e.getMessage());
 		}
@@ -281,50 +291,40 @@ public class MainWindows implements MainListener {
 	 * 导出数据
 	 */
 	private void exportData() {
-//		if (serialPort == null) {
-//			JOptionPane.showMessageDialog(frame, "请先打开串口");
-//			return;
-//		}
+		if (serialPort == null) {
+			JOptionPane.showMessageDialog(frame, "请先打开串口");
+			return;
+		}
+
+		JFileChooser jfc = new JFileChooser();
+		jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		jfc.showDialog(new JLabel(), "请选择保存位置");
+		file = jfc.getSelectedFile();
+		System.err.println(file.getAbsolutePath());
 
 		try {
-			serialPort = SerialPortManager.openPort("COM3", 57600);
-			label_Info.setText("正在导出，请稍后...");
-			SerialPortManager.addListener(serialPort, new ComReceiveEventListener(MainWindows.this, serialPort));
+//			file = new File("D:\\table");
+//			serialPort = SerialPortManager.openPort("COM3", 57600);
+			SerialPortManager.addListener(serialPort, new ComReceiveEventListener(MainWindows.this, serialPort, 0));
 			byte[] bytes = new byte[] { (byte) 0xFE, (byte) 0x68, (byte) 0x00, (byte) 0x02, (byte) 0x51, (byte) 0x10,
 					(byte) 0x20, (byte) 0xEB, (byte) 0x16 };
 			SerialPortManager.sendToPort(serialPort, bytes);
+			label_Info.setText("正在导出，请稍后...");
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(frame, e.getMessage());
 		}
 
 	}
 
+	/**
+	 * 将收到的数据解析并保存进Excel文件
+	 * 
+	 * @param bytes
+	 */
 	private void exRecData(byte[] bytes) {
-		if (bytes[7] == 96) {
-			int len = bytes[5] * 256 + bytes[6];
-			len = (len - 2) / 6;
-			List<byte[]> list = new ArrayList<byte[]>();
-			for (int i = 0; i < len; i++) {
-				byte[] b = new byte[9];
-				b[0] = (byte) 0xFE;
-				b[1] = (byte) 0x68;
-				b[2] = 0;
-				b[3] = 2;
-				b[4] = (byte) 0x51;
-				int page = (260 + i * 2) * 16;
-				b[5] = (byte) (page / 256);
-				b[6] = (byte) (page % 256);
-				b[7] = (byte) (((byte) 0xBB) + b[5] + b[6]);
-				b[8] = (byte) 0x16;
-				list.add(b);
-			}
-			ComReceiveThread sendThread2 = new ComReceiveThread(MainWindows.this, serialPort, list);
-			sendThread2.start();
-			return;
-		}
 
 		int count = bytes[7] & 0xff;
-		System.out.println("记录数：" + count);
+//		System.out.println("记录数：" + count);
 		byte[] recBytes = new byte[64 + 51 * count];
 
 		try {
@@ -340,38 +340,39 @@ public class MainWindows implements MainListener {
 				recBytes[i] = tmpBytes.get(i);
 			}
 
-			System.out.println("---");
-			for (byte b : recBytes) {
-
-				System.out.print(String.format("%02X", b) + " ");
-			}
-			System.out.println("\n---");
-//			System.out.println(recBytes.length);
-//			for (int j = 0; j < recBytes.length; j++) {
-			//
+//			System.out.println("---");
+//			for (byte b : recBytes) {
+//
+//				System.out.print(String.format("%02X", b) + " ");
 //			}
-			byte[] head = new byte[47];
-			System.arraycopy(recBytes, 0, head, 0, 47);
+//			System.out.println("\n---");
 
-			TableHead head2 = ByteUtil.byteToHead(head);
-			System.err.println(head2.toString());
+			byte[] headBytes = new byte[47];
+			System.arraycopy(recBytes, 0, headBytes, 0, 47);
+
+			TableHead head = ByteUtil.byteToHead(headBytes);
+//			System.err.println(head.toString());
 
 			List<TableRecoder> list = new ArrayList<TableRecoder>();
 			for (int i = 0; i < count; i++) {
 				byte[] rec = new byte[51];
 				System.arraycopy(recBytes, 64 + i * 51, rec, 0, 51);
 				TableRecoder recoder = ByteUtil.byteToRecoder(rec);
-				System.err.println(recoder);
+//				System.err.println(recoder);
 				list.add(recoder);
 			}
 
 			new Thread() {
-				Object lock = new Object();
-
 				public void run() {
-					synchronized (lock) {
-
-						ExcelManager.writeExcelFile(head2, list);
+					synchronized (file) {
+						try {
+							System.out.println("写入");
+							ExcelManager.writeExcelFile(head, list, file);
+						} catch (FileNotFoundException e) {
+							JOptionPane.showMessageDialog(frame, e.getMessage());
+						} catch (IOException e) {
+							JOptionPane.showMessageDialog(frame, e.getMessage());
+						}
 					}
 				};
 			}.start();
@@ -391,8 +392,21 @@ public class MainWindows implements MainListener {
 			// label_Info.setText("操作完成，全部文件写入成功!");
 			JOptionPane.showMessageDialog(frame, "写入过程中出错，请重新进行操作！");
 		}
+		label_Info.setText("写入完成");
 		progressBar.setValue(0);
 
+	}
+
+	@Override
+	public void onSendReadCompelet(int code) {
+		SerialPortManager.removeListener(serialPort);
+		if (code == 0) {
+			JOptionPane.showMessageDialog(frame, "导出成功！");
+		} else {
+			JOptionPane.showMessageDialog(frame, "导出完成，有" + code + "条数据导出失败！");
+		}
+		label_Info.setText("导出完成");
+		progressBar.setValue(0);
 	}
 
 	@Override
@@ -402,19 +416,34 @@ public class MainWindows implements MainListener {
 		}
 		if (bytes.length == 6 && bytes[0] == (byte) 0x68 && bytes[1] == 0 && bytes[2] == 0 && bytes[3] == (byte) 0xAC
 				&& bytes[4] == (byte) 0x14 && bytes[5] == (byte) 0x16) {
-			sendThread.flag = true;
+			writeThread.flag = true;
 			progressBar.setValue(progressBar.getValue() + 1);
 		}
 	}
 
 	@Override
-	public void onReceiveCompelet(byte[] bytes) {
-
-		if (bytes.length != 8232) {
+	public void onReceiveCompelet1(byte[] bytes) {
+		if (bytes.length != 8232 || bytes[4] != 104 || bytes[7] != 96) {
 			label_Info.setText("导出失败，请重试");
+			JOptionPane.showMessageDialog(frame, "导出失败，请重试！");
+			SerialPortManager.removeListener(serialPort);
 			return;
 		}
-		exRecData(bytes);
+		List<byte[]> list = ByteUtil.getReadByte(bytes);
+		progressBar.setMaximum(list.size());
+		SerialPortManager.addListener(serialPort, new ComReceiveEventListener(MainWindows.this, serialPort, 0));
+		receiveThread = new ComReceiveThread(MainWindows.this, serialPort, list);
+		receiveThread.start();
+	}
+
+	@Override
+	public void onReceiveCompelet2(byte[] bytes) {
+		if (bytes.length == 8232) {
+			receiveThread.flag = true;
+			exRecData(bytes);
+			progressBar.setValue(progressBar.getValue() + 1);
+		}
 
 	}
+
 }

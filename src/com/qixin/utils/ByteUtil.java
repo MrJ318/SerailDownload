@@ -1,5 +1,8 @@
 package com.qixin.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.qixin.exception.ReadExcelException;
 import com.qixin.model.Lou;
 import com.qixin.model.TableHead;
@@ -134,13 +137,11 @@ public class ByteUtil {
 		}
 		recoder.setWorktime(bits + "");
 		// 状态1
-		bits = 0;
 		bits = bytes[49];
 		recoder.setState1(String.format("%02X", bits));
 		// 状态2
-		bits = 0;
 		bits = bytes[50];
-		recoder.setState1(String.format("%02X", bits));
+		recoder.setState2(String.format("%02X", bits));
 		return recoder;
 	}
 
@@ -219,7 +220,8 @@ public class ByteUtil {
 		bytes[7] = (byte) index;
 		bytes[8] = (byte) 0xEA;// 文件头开始
 		bytes[9] = (byte) 0x00;// 文件头校验
-		bytes[10] = (byte) 0x00;// 厂家
+		int code = Integer.parseInt(recoder.getChangjia());
+		bytes[10] = (byte) code;// 厂家
 		bytes[11] = (byte) 0x20;// 类型+表码
 		String tmp = String.format("%08d", Integer.parseInt(recoder.getAddr().trim()));
 		char[] array = tmp.toCharArray();
@@ -246,7 +248,7 @@ public class ByteUtil {
 		for (int i = 10; i < 59; i++) {
 			bytes[9] += bytes[i];
 		}
-		for (int i = 1; i < bytes.length-2; i++) {
+		for (int i = 1; i < bytes.length - 2; i++) {
 			bytes[59] += bytes[i];
 		}
 		return bytes;
@@ -313,4 +315,29 @@ public class ByteUtil {
 		bytes[8] = (byte) 0x16;
 		return bytes;
 	}
+
+	public static List<byte[]> getReadByte(byte[] bytes) {
+		int len = bytes[5] << 8;
+		len = len + bytes[6];
+		len = (len - 2) / 6;
+		List<byte[]> list = new ArrayList<byte[]>();
+		for (int i = 0; i < len; i++) {
+			byte[] b = new byte[9];
+			b[0] = (byte) 0xFE;
+			b[1] = (byte) 0x68;
+			b[2] = 0;
+			b[3] = 2;
+			b[4] = (byte) 0x51;
+			int page = bytes[14 + i * 6] << 8;
+			page = page + bytes[15 + i * 6];
+			page = page << 4;
+			b[5] = (byte) (page >> 8);
+			b[6] = (byte) page;
+			b[7] = (byte) (((byte) 0xBB) + b[5] + b[6]);
+			b[8] = (byte) 0x16;
+			list.add(b);
+		}
+		return list;
+	}
+
 }

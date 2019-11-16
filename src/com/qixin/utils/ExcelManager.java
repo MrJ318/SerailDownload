@@ -2,8 +2,11 @@ package com.qixin.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,8 +17,11 @@ import java.util.Vector;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -431,79 +437,106 @@ public class ExcelManager {
 //		return bytes;
 //	}
 
-	public static void writeExcelFile(TableHead head, List<TableRecoder> recoders) {
-		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-		File file = null;
-		try {
-			file = new File("D:\\table\\" + format.format(new Date()) + ".xlsx");
-			XSSFWorkbook excel;
-			XSSFSheet sheet;
-			Row row;
-			if (!file.exists()) {
-				excel = new XSSFWorkbook();// 获取excel工作薄对象
-				sheet = excel.createSheet();// 获取excel工作表对象(sheet)
-				row = sheet.createRow(0);
-				row.createCell(0).setCellValue("厂家");
-				row.createCell(1).setCellValue("类型");
-				row.createCell(2).setCellValue("表码");
-				row.createCell(3).setCellValue("门牌");
-				row.createCell(4).setCellValue("冷量");
-				row.createCell(5).setCellValue("热量");
-				row.createCell(6).setCellValue("功率");
-				row.createCell(7).setCellValue("流速");
-				row.createCell(8).setCellValue("流量");
-				row.createCell(9).setCellValue("入口温度");
-				row.createCell(10).setCellValue("出口温度");
-				row.createCell(11).setCellValue("工作时间");
-				row.createCell(12).setCellValue("状态1");
-				row.createCell(13).setCellValue("状态2");
-				for (int i = 0; i < 14; i++) {
-					sheet.setColumnWidth(i, 256 * 12);
-				}
-				excel.write(new FileOutputStream(file));
-				excel.close();
-
-			}
-			excel = new XSSFWorkbook(new FileInputStream(file));
-			sheet = excel.getSheetAt(0);
-			int rowid = sheet.getLastRowNum() + 1;
-			row = sheet.createRow(rowid);
+	public static void writeExcelFile(TableHead head, List<TableRecoder> recoders, File file)
+			throws FileNotFoundException, IOException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		file = new File(file, sdf.format(new Date()) + ".xlsx");
+		XSSFWorkbook excel;
+		XSSFSheet sheet;
+		Row row;
+		XSSFCellStyle style;
+		if (!file.exists()) {
+			excel = new XSSFWorkbook();
+			sheet = excel.createSheet();
+			row = sheet.createRow(0);
+			style = excel.createCellStyle();
+			style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+			row.createCell(0).setCellValue("厂家");
+			row.getCell(0).setCellStyle(style);
+			row.createCell(1).setCellValue("类型");
+			row.getCell(1).setCellStyle(style);
+			row.createCell(2).setCellValue("表码");
+			row.getCell(2).setCellStyle(style);
+			row.createCell(3).setCellValue("门牌");
+			row.getCell(3).setCellStyle(style);
+			row.createCell(4).setCellValue("冷量");
+			row.getCell(4).setCellStyle(style);
+			row.createCell(5).setCellValue("热量");
+			row.getCell(5).setCellStyle(style);
+			row.createCell(6).setCellValue("功率");
+			row.getCell(6).setCellStyle(style);
+			row.createCell(7).setCellValue("流速");
+			row.getCell(7).setCellStyle(style);
+			row.createCell(8).setCellValue("流量");
+			row.getCell(8).setCellStyle(style);
+			row.createCell(9).setCellValue("入口温度");
+			row.getCell(9).setCellStyle(style);
+			row.createCell(10).setCellValue("出口温度");
+			row.getCell(10).setCellStyle(style);
+			row.createCell(11).setCellValue("工作时间");
+			row.getCell(11).setCellStyle(style);
+			row.createCell(12).setCellValue("状态1");
+			row.getCell(12).setCellStyle(style);
+			row.createCell(13).setCellValue("状态2");
+			row.getCell(13).setCellStyle(style);
 			for (int i = 0; i < 14; i++) {
-				row.createCell(i);
+				sheet.setColumnWidth(i, 256 * 12);
 			}
-			CellRangeAddress region = new CellRangeAddress(rowid, rowid, 0, 13);
-			sheet.addMergedRegion(region);
-			StringBuffer buffer = new StringBuffer();
-			buffer.append(head.getXiaoqu() + "  ");
-			buffer.append(head.getLouhao() + "号楼  ");
-			buffer.append(head.getDanyuan() + "单元  --  ");
-			buffer.append("总线号：" + head.getLinenum());
-			buffer.append("  抄表数量：" + head.getCount());
-			buffer.append("  出错数量：" + head.getErrcnt());
-
-			row.getCell(0).setCellValue(buffer.toString());
-			for (int i = 0; i < recoders.size(); i++) {
-				row = sheet.createRow(rowid + 1 + i);
-				row.createCell(0).setCellValue(recoders.get(i).getChangjia());
-				row.createCell(1).setCellValue(recoders.get(i).getType());
-				row.createCell(2).setCellValue(recoders.get(i).getAddr());
-				row.createCell(3).setCellValue(recoders.get(i).getMenpai());
-				row.createCell(4).setCellValue(recoders.get(i).getCold());
-				row.createCell(5).setCellValue(recoders.get(i).getHot());
-				row.createCell(6).setCellValue(recoders.get(i).getPower());
-				row.createCell(7).setCellValue(recoders.get(i).getFlux());
-				row.createCell(8).setCellValue(recoders.get(i).getVol());
-				row.createCell(9).setCellValue(recoders.get(i).getIntemp());
-				row.createCell(10).setCellValue(recoders.get(i).getOuttemp());
-				row.createCell(11).setCellValue(recoders.get(i).getWorktime());
-				row.createCell(12).setCellValue(recoders.get(i).getState1());
-				row.createCell(13).setCellValue(recoders.get(i).getState2());
-			}
-			excel.write(new FileOutputStream(file));
+			OutputStream os = new FileOutputStream(file);
+			excel.write(os);
+			os.close();
 			excel.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
+		InputStream is = new FileInputStream(file);
+		excel = new XSSFWorkbook(is);
+		sheet = excel.getSheetAt(0);
+		int rowid = sheet.getLastRowNum() + 1;
+		row = sheet.createRow(rowid);
+		for (int i = 0; i < 14; i++) {
+			row.createCell(i);
+		}
+		CellRangeAddress region = new CellRangeAddress(rowid, rowid, 0, 13);
+		sheet.addMergedRegion(region);
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(head.getXiaoqu() + "  ");
+		buffer.append(head.getLouhao() + "号楼  ");
+		buffer.append(head.getDanyuan() + "单元  --  ");
+		buffer.append("总线号：" + head.getLinenum());
+		buffer.append("  抄表数量：" + head.getCount());
+		buffer.append("  出错数量：" + head.getErrcnt());
+		buffer.append("  抄表时间：" + head.getDatetime());
+		sdf = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
+		buffer.append("  导出时间：" + sdf.format(new Date()));
+		style = excel.createCellStyle();
+		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+		row.getCell(0).setCellValue(buffer.toString());
+		row.getCell(0).setCellStyle(style);
+		System.out.println("写入head" + recoders.size());
+
+		for (int i = 0; i < recoders.size(); i++) {
+			row = sheet.createRow(rowid + 1 + i);
+			row.createCell(0).setCellValue(recoders.get(i).getChangjia());
+			row.createCell(1).setCellValue(recoders.get(i).getType());
+			row.createCell(2).setCellValue(recoders.get(i).getAddr());
+			row.createCell(3).setCellValue(recoders.get(i).getMenpai());
+			row.createCell(4).setCellValue(recoders.get(i).getCold());
+			row.createCell(5).setCellValue(recoders.get(i).getHot());
+			row.createCell(6).setCellValue(recoders.get(i).getPower());
+			row.createCell(7).setCellValue(recoders.get(i).getFlux());
+			row.createCell(8).setCellValue(recoders.get(i).getVol());
+			row.createCell(9).setCellValue(recoders.get(i).getIntemp());
+			row.createCell(10).setCellValue(recoders.get(i).getOuttemp());
+			row.createCell(11).setCellValue(recoders.get(i).getWorktime());
+			row.createCell(12).setCellValue(recoders.get(i).getState1());
+			row.createCell(13).setCellValue(recoders.get(i).getState2());
+		}
+		OutputStream os = new FileOutputStream(file);
+		excel.write(os);
+		os.close();
+		is.close();
+		excel.close();
 	}
 
 }
