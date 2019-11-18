@@ -3,6 +3,8 @@ package com.qixin.service;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.log4j.Logger;
+
 import com.qixin.listener.MainListener;
 
 import gnu.io.SerialPort;
@@ -10,10 +12,14 @@ import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 
 /**
- * @author Mr.J
- * @Date 2019/9/7 - 13:53
+ * 发送写入文件后串口监听
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
  */
 public class ComWriteEventListener implements SerialPortEventListener {
+	private Logger logger = Logger.getLogger(ComWriteEventListener.class);
 
 	private MainListener listener;
 	private SerialPort serialPort;
@@ -30,14 +36,6 @@ public class ComWriteEventListener implements SerialPortEventListener {
 			byte[] bytes = null;
 			try {
 				in = serialPort.getInputStream();
-				// 获取buffer里的数据长度
-//				int bufflenth = in.available();
-//				while (bufflenth != 0) {
-//					// 初始化byte数组为buffer中数据的长度
-//					bytes = new byte[bufflenth];
-//					in.read(bytes);
-//					bufflenth = in.available();
-//				}
 
 				while (in.available() > 0) {
 
@@ -52,14 +50,16 @@ public class ComWriteEventListener implements SerialPortEventListener {
 					in.read(bytes);
 				}
 
-				System.out.print("收到"+bytes.length+"--:");
+				StringBuffer buffer = new StringBuffer();
 				for (int i = 0; i < bytes.length; i++) {
-					System.out.print(String.format("%02X", bytes[i])+" ");
+					buffer.append(String.format("%02X", bytes[i]) + " ");
 				}
-				System.out.println();
+				logger.debug("收到数据：" + buffer);
+
 				listener.onWriteCompelet(bytes);
 			} catch (IOException e) {
 				e.printStackTrace();
+				logger.error(e.getMessage());
 			} finally {
 				try {
 					if (in != null) {

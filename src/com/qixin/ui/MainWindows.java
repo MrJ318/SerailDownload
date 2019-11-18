@@ -22,6 +22,8 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
+import org.apache.log4j.Logger;
+
 import com.google.common.primitives.Bytes;
 import com.qixin.listener.MainListener;
 import com.qixin.model.TableHead;
@@ -40,6 +42,8 @@ import gnu.io.SerialPort;
 import gnu.io.UnsupportedCommOperationException;
 
 public class MainWindows implements MainListener {
+
+	private Logger logger = Logger.getLogger(MainWindows.class);
 
 	private JFrame frame;
 	private JTable table_Write;
@@ -233,10 +237,13 @@ public class MainWindows implements MainListener {
 				return "关闭串口";
 			} catch (NoSuchPortException e) {
 				JOptionPane.showMessageDialog(frame, "串口打开失败，串口号有误！");
+				logger.error(e.getMessage());
 			} catch (PortInUseException e) {
 				JOptionPane.showMessageDialog(frame, "串口打开失败，当前串口被占用！");
+				logger.error(e.getMessage());
 			} catch (UnsupportedCommOperationException e) {
 				JOptionPane.showMessageDialog(frame, "串口打开失败，" + e.getMessage());
+				logger.error(e.getMessage());
 			}
 			return "";
 		}
@@ -266,6 +273,7 @@ public class MainWindows implements MainListener {
 			writeThread.start();
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(frame, "读取文件失败，请检查\n" + e.getMessage());
+			logger.error(e.getMessage());
 		}
 //		try {
 //			serialPort = SerialPortManager.openPort("COM3", 57600);
@@ -300,7 +308,6 @@ public class MainWindows implements MainListener {
 		jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		jfc.showDialog(new JLabel(), "请选择保存位置");
 		file = jfc.getSelectedFile();
-		System.err.println(file.getAbsolutePath());
 
 		try {
 //			file = new File("D:\\table");
@@ -312,6 +319,7 @@ public class MainWindows implements MainListener {
 			label_Info.setText("正在导出，请稍后...");
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(frame, e.getMessage());
+			logger.error(e.getMessage());
 		}
 
 	}
@@ -323,8 +331,9 @@ public class MainWindows implements MainListener {
 	 */
 	private void exRecData(byte[] bytes) {
 
+		logger.debug("-----开始解析数据-----");
 		int count = bytes[7] & 0xff;
-//		System.out.println("记录数：" + count);
+		logger.debug("总记录数:" + count);
 		byte[] recBytes = new byte[64 + 51 * count];
 
 		try {
@@ -340,25 +349,24 @@ public class MainWindows implements MainListener {
 				recBytes[i] = tmpBytes.get(i);
 			}
 
-//			System.out.println("---");
-//			for (byte b : recBytes) {
-//
-//				System.out.print(String.format("%02X", b) + " ");
-//			}
-//			System.out.println("\n---");
+			StringBuffer buffer = new StringBuffer();
+			for (byte b : recBytes) {
+				buffer.append(String.format("%02X", b) + " ");
+			}
+			logger.debug("解析到的字节数组：" + buffer);
 
 			byte[] headBytes = new byte[47];
 			System.arraycopy(recBytes, 0, headBytes, 0, 47);
 
 			TableHead head = ByteUtil.byteToHead(headBytes);
-//			System.err.println(head.toString());
+			logger.debug("解析到的文件头：" + head);
 
 			List<TableRecoder> list = new ArrayList<TableRecoder>();
 			for (int i = 0; i < count; i++) {
 				byte[] rec = new byte[51];
 				System.arraycopy(recBytes, 64 + i * 51, rec, 0, 51);
 				TableRecoder recoder = ByteUtil.byteToRecoder(rec);
-//				System.err.println(recoder);
+				logger.debug("解析到的记录" + i + "：" + recoder);
 				list.add(recoder);
 			}
 
@@ -366,12 +374,13 @@ public class MainWindows implements MainListener {
 				public void run() {
 					synchronized (file) {
 						try {
-							System.out.println("写入");
 							ExcelManager.writeExcelFile(head, list, file);
 						} catch (FileNotFoundException e) {
 							JOptionPane.showMessageDialog(frame, e.getMessage());
+							logger.error(e.getMessage());
 						} catch (IOException e) {
 							JOptionPane.showMessageDialog(frame, e.getMessage());
+							logger.error(e.getMessage());
 						}
 					}
 				};
@@ -379,17 +388,16 @@ public class MainWindows implements MainListener {
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
-
+		logger.debug("-----结束解析数据-----");
 	}
 
 	public void onSendCompelet(int code) {
 		SerialPortManager.removeListener(serialPort);
 		if (code == 0) {
-			// label_Info.setText("操作完成，全部文件写入成功!");
 			JOptionPane.showMessageDialog(frame, "操作完成，全部文件写入成功！");
 		} else {
-			// label_Info.setText("操作完成，全部文件写入成功!");
 			JOptionPane.showMessageDialog(frame, "写入过程中出错，请重新进行操作！");
 		}
 		label_Info.setText("写入完成");

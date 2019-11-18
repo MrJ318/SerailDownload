@@ -16,8 +16,11 @@ import gnu.io.SerialPortEventListener;
 import gnu.io.UnsupportedCommOperationException;
 
 /**
- * @author Mr.J
- * @Date 2019/10/9 - 9:41
+ * 串口读写工具
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
  */
 public class SerialPortManager {
 

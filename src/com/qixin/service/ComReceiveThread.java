@@ -2,12 +2,22 @@ package com.qixin.service;
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.qixin.listener.MainListener;
 import com.qixin.utils.SerialPortManager;
 
 import gnu.io.SerialPort;
 
+/**
+ * 发送读取数据命令线程
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
+ */
 public class ComReceiveThread extends Thread {
+	private Logger logger = Logger.getLogger(ComReceiveThread.class);
 
 	private MainListener listener;
 	private List<byte[]> sendList;
@@ -27,16 +37,18 @@ public class ComReceiveThread extends Thread {
 		for (int i = 0; i < sendList.size(); i++) {
 			flag = false;
 			SerialPortManager.sendToPort(serialPort, sendList.get(i));
-			System.out.println("发送：" + i + "/" + sendList.size());
-//			System.out.print("发送" + i + "--");
-			// for (int j = 0; j < sendList.get(i).length; j++) {
-			// System.out.print(String.format("%02X", sendList.get(i)[j]) + " ");
-			// }
-			// System.out.println();
+
+			StringBuffer buffer = new StringBuffer();
+			for (int j = 0; j < sendList.get(i).length; j++) {
+				buffer.append(String.format("%02X", sendList.get(i)[j]) + " ");
+			}
+			logger.debug("发送数据" + i + "/" + sendList.size() + "：" + buffer);
+
 			try {
 				sleep(2000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				logger.error(e.getMessage());
 			}
 			if (count > 2) {
 				flag = true;
@@ -45,7 +57,7 @@ public class ComReceiveThread extends Thread {
 			if (!flag) {
 				i--;
 				count++;
-				System.out.println("重试");
+				logger.debug("发送失败，重试");
 			} else {
 				count = 0;
 			}

@@ -4,12 +4,18 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
+/**
+ * 数据模型
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
+ */
 public class AddCheckboxTableModel extends DefaultTableModel {
 
 	private static final long serialVersionUID = 1L;
 
 	public AddCheckboxTableModel(Vector<Vector<Object>> data, Vector<Object> columns) {
-//	public AddCheckboxTableModel(Object[][] data, Object[] columns) {
 		super(data, columns);
 	}
 
@@ -20,5 +26,4 @@ public class AddCheckboxTableModel extends DefaultTableModel {
 		return false;
 	}
 
-	
 }

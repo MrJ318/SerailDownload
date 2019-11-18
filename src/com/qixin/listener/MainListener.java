@@ -1,5 +1,12 @@
 package com.qixin.listener;
 
+/**
+ * 主界面回调接口
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
+ */
 public interface MainListener {
 
 	/**
@@ -12,7 +19,7 @@ public interface MainListener {
 	/**
 	 * 发送读取线程回调
 	 * 
-	 * @param code 发送结果 失败数量  0成功
+	 * @param code 发送结果 失败数量 0成功
 	 */
 	void onSendReadCompelet(int code);
 

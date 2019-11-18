@@ -1,5 +1,12 @@
 package com.qixin.model;
 
+/**
+ * 楼信息实体类
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
+ */
 public class Lou {
 	private String name;
 	private int addr;

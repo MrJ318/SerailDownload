@@ -10,6 +10,13 @@ import com.qixin.model.TableRecoder;
 import com.qixin.model.Xiaoqu;
 import com.qixin.model.Zongxian;
 
+/**
+ * 字节数组工具
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
+ */
 public class ByteUtil {
 
 	/**

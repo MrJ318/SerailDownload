@@ -1,37 +1,25 @@
 package com.qixin.model;
 
+/**
+ * 导入文件实体类
+ * 
+ * @author Jevon
+ * @date 2019年11月16日 下午4:10:08
+ * 
+ */
 public class ExcelFile {
 
-	//private String type;
-	//private String count;
 	private String xiaoqu;
 	private String louhao;
 	private String danyuan;
 	private String zongxian;
 	private String menpai;
 	private String changjia;
-	//private String type1;
 	private String code;
 
 	public ExcelFile() {
 		super();
 	}
-
-//	public String getType() {
-//		return type;
-//	}
-//
-//	public void setType(String type) {
-//		this.type = type;
-//	}
-//
-//	public String getCount() {
-//		return count;
-//	}
-//
-//	public void setCount(String count) {
-//		this.count = count;
-//	}
 
 	public String getXiaoqu() {
 		return xiaoqu;
